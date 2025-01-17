@@ -10,24 +10,24 @@
   </head>
   <body class="bg-gradient-to-b from-sky-500 min-h-screen flex items-center justify-center">
     <main class="container max-w-md bg-white shadow-lg rounded-lg p-8 font-mono text-base transition-all ease-in-out delay-150">
-      <h1 class="text-2xl font-bold text-center">Pokémon Search App</h1> 
-      <p id="author" class="my-2 text-center">By: Tsenguunbileg Choidogjamts</p>
+      <h1 class="text-2xl font-bold text-center">Татвар төлөгчийн мэдээлэл татах програм</h1> 
+      <p id="author" class="my-2 text-center">Програм зохиогч: Цэнгүүнбилэг</p>
       <div class="w-full">
         <form role="search" id="search-form" class="my-4">
-          <label for="search-input">Search for Pokémon Name or ID:</label>
+          <label for="search-input">Регистрийн дугаар: оруулна уу</label>
           <input 
             type="text" 
             name="pokemon" 
             id="search-input" 
             required
-            placeholder="Enter Pokémon name or ID" 
+            placeholder="Регистрийн дугаар" 
             class="w-3/4 border rounded p-2 focus:outline-none focus:ring-2 focus:ring-sky-500" 
           />
           <button 
             id="search-button" 
             class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600"
           >
-            Search
+            Хайх
           </button>
         </form>
         <div class="output">
@@ -46,32 +46,24 @@
           <div class="bottom-container mt-4">
             <table class="w-full border-2 border-separate border-sky-300 border-spacing-2">
               <tr>
-                <th class="border border-slate-300 bg-sky-300">Base</th>
-                <th class="border border-slate-300 p-1 bg-sky-300">Stats</th>
+                <th class="border border-slate-300 bg-sky-300">Мэдээ</th>
+                <th class="border border-slate-300 p-1 bg-sky-300">Хариу</th>
               </tr>
               <tr>
-                <td class="border border-slate-300 p-1 bg-sky-200/70">HP:</td>
+                <td class="border border-slate-300 p-1 bg-sky-200/70">НӨАТ төлөгч эсэх</td>
                 <td id="hp" class="border border-slate-300 p-1 bg-sky-200/70"></td>
               </tr>
               <tr>
-                <td class="border border-slate-300 p-1 bg-sky-100">Attack:</td>
+                <td class="border border-slate-300 p-1 bg-sky-100">НХАТ төлөгч эсэх</td>
                 <td id="attack" class="border border-slate-300 p-1 bg-sky-100"></td>
               </tr>
               <tr>
-                <td class="border border-slate-300 p-1 bg-sky-100">Defense:</td>
+                <td class="border border-slate-300 p-1 bg-sky-100">Олдсон эсэх</td>
                 <td id="defense" class="border border-slate-300 p-1 bg-sky-100"></td>
               </tr>
               <tr>
-                <td class="border border-slate-300 p-1 bg-sky-100">Sp. Attack:</td>
+                <td class="border border-slate-300 p-1 bg-sky-100">НӨАТ төлөгч болсон огноо</td>
                 <td id="special-attack" class="border border-slate-300 p-1 bg-sky-100"></td>
-              </tr>
-              <tr>
-                <td class="border border-slate-300 p-1 bg-sky-100">Sp. Defense:</td>
-                <td id="special-defense" class="border border-slate-300 p-1 bg-sky-100"></td>
-              </tr>
-              <tr>
-                <td class="border border-slate-300 p-1 bg-sky-100">Speed:</td>
-                <td id="speed" class="border border-slate-300 p-1 bg-sky-100"></td>
               </tr>
             </table>
           </div>
