@@ -12,6 +12,8 @@ const cityTaxPayer = document.getElementById("city-tax-payer");
 const taxpayerFound = document.getElementById("taxpayer-found");
 const vatRegisteredDate = document.getElementById("vat-registered-date");
 
+const DIRECT_TIN_INFO_URL = "https://api.ebarimt.mn/api/info/check/getTinInfo";
+const DIRECT_TAXPAYER_INFO_URL = "https://api.ebarimt.mn/api/info/check/getInfo";
 const TIN_INFO_URL = "/api/ebarimt/getTinInfo";
 const TAXPAYER_INFO_URL = "/api/ebarimt/getInfo";
 const TAXPAYER_PROXY_URL = "/api/taxpayer";
@@ -152,6 +154,17 @@ function canTrySameOriginProxy() {
   return window.location.protocol === "http:" || window.location.protocol === "https:";
 }
 
+function getApiMode() {
+  const params = new URLSearchParams(window.location.search);
+  return (params.get("api") || localStorage.getItem("taxLookupApiMode") || "")
+    .trim()
+    .toLowerCase();
+}
+
+function isDirectApiMode() {
+  return getApiMode() === "direct";
+}
+
 function extractTin(payload) {
   if (!payload || payload.data === null || payload.data === undefined) {
     throw new Error(payload?.msg || "ТИН дугаар олдсонгүй.");
@@ -187,13 +200,18 @@ function extractTaxpayerInfo(payload) {
 }
 
 async function fetchTaxpayerDirectly(registrationNumber) {
+  const tinInfoUrl = isDirectApiMode() ? DIRECT_TIN_INFO_URL : TIN_INFO_URL;
+  const taxpayerInfoUrl = isDirectApiMode()
+    ? DIRECT_TAXPAYER_INFO_URL
+    : TAXPAYER_INFO_URL;
+
   const tinPayload = await fetchApiJson(
-    buildApiUrl(TIN_INFO_URL, { regNo: registrationNumber }),
+    buildApiUrl(tinInfoUrl, { regNo: registrationNumber }),
   );
   const tin = extractTin(tinPayload);
 
   const taxpayerPayload = await fetchApiJson(
-    buildApiUrl(TAXPAYER_INFO_URL, { tin }),
+    buildApiUrl(taxpayerInfoUrl, { tin }),
   );
   const info = extractTaxpayerInfo(taxpayerPayload);
 
@@ -218,6 +236,10 @@ async function fetchTaxpayerThroughProxy(registrationNumber) {
 }
 
 async function fetchTaxpayer(registrationNumber) {
+  if (isDirectApiMode()) {
+    return fetchTaxpayerDirectly(registrationNumber);
+  }
+
   if (canTrySameOriginProxy()) {
     try {
       return await fetchTaxpayerThroughProxy(registrationNumber);
