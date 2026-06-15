@@ -134,7 +134,7 @@ img.hidden-src {
 }
 
 .app-shell {
-  width: min(100%, 660px);
+  width: min(100%, 740px);
   position: relative;
   z-index: 2;
 }
@@ -482,7 +482,7 @@ body[data-theme="semi"]::after {
 }
 
 body[data-theme="glass"] .lookup-card {
-  width: clamp(360px, 38vw, 520px);
+  width: clamp(390px, 42vw, 580px);
   padding: 26px 24px 22px;
   border-radius: 34px;
   color: var(--ink, #fff);
@@ -628,7 +628,7 @@ body[data-theme="classic"] .api-mode-toggle.is-active {
 }
 
 body[data-theme="classic"] .lookup-card {
-  width: min(100%, 640px);
+  width: min(100%, 700px);
   padding: 32px;
   border-radius: 14px;
   background: #fff;
