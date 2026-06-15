@@ -134,7 +134,7 @@ img.hidden-src {
 }
 
 .app-shell {
-  width: min(100%, 560px);
+  width: min(100%, 660px);
   position: relative;
   z-index: 2;
 }
@@ -482,7 +482,7 @@ body[data-theme="semi"]::after {
 }
 
 body[data-theme="glass"] .lookup-card {
-  width: clamp(300px, 29vw, 375px);
+  width: clamp(360px, 38vw, 520px);
   padding: 26px 24px 22px;
   border-radius: 34px;
   color: var(--ink, #fff);
@@ -498,27 +498,7 @@ body[data-theme="glass"] .lookup-card {
 
 body[data-theme="glass"] .lookup-card::before,
 body[data-theme="glass"] .lookup-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-body[data-theme="glass"] .lookup-card::before {
-  background:
-    radial-gradient(circle at 22% 0%, rgba(255, 255, 255, 0.48), transparent 24%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.25), transparent 30%),
-    linear-gradient(315deg, rgba(255, 255, 255, 0.1), transparent 38%);
-  opacity: 0.5;
-  mix-blend-mode: screen;
-}
-
-body[data-theme="glass"] .lookup-card::after {
-  inset: 0;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
-    inset 0 14px 34px rgba(255, 255, 255, 0.06);
+  content: none;
 }
 
 body[data-theme="semi"] .lookup-card,
@@ -648,6 +628,7 @@ body[data-theme="classic"] .api-mode-toggle.is-active {
 }
 
 body[data-theme="classic"] .lookup-card {
+  width: min(100%, 640px);
   padding: 32px;
   border-radius: 14px;
   background: #fff;
