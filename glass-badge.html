@@ -1,0 +1,1450 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-1063NJS02R"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-1063NJS02R');
+    </script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub Glass Card</title>
+    <meta
+      name="description"
+      content="Turn your GitHub profile into a liquid-glass card you can sign and download."
+    />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://bubbbly.com/app/github-glass-badge.html"
+    />
+    <meta property="og:title" content="GitHub Glass Card" />
+    <meta
+      property="og:description"
+      content="Turn your GitHub profile into a liquid-glass card you can sign and download."
+    />
+    <meta
+      property="og:image"
+      content="https://image.social/get?url=bubbbly.com/app/github-glass-badge.html"
+    />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:url"
+      content="https://bubbbly.com/app/github-glass-badge.html"
+    />
+    <meta name="twitter:title" content="GitHub Glass Card" />
+    <meta
+      name="twitter:description"
+      content="Turn your GitHub profile into a liquid-glass card you can sign and download."
+    />
+    <meta
+      name="twitter:image"
+      content="https://image.social/get?url=bubbbly.com/app/github-glass-badge.html"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+        font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      }
+      img.hidden-src {
+        display: none;
+      }
+      #glcanvas {
+        position: fixed;
+        inset: 0;
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      /* ---------- left control panel ---------- */
+      #panel {
+        position: absolute;
+        left: 6vw;
+        top: 50%;
+        transform: translateY(-50%);
+        width: clamp(300px, 34vw, 420px);
+        padding: 28px 30px 26px;
+        border-radius: 26px;
+        max-height: 92vh;
+        overflow-y: auto;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow:
+          0 24px 60px rgba(0, 0, 0, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        backdrop-filter: blur(22px) saturate(1.2);
+        -webkit-backdrop-filter: blur(22px) saturate(1.2);
+        color: #fff;
+        z-index: 4;
+      }
+      #panel h1 {
+        margin: 0 0 10px;
+        font-size: clamp(20px, 1.8vw, 26px);
+        font-weight: 800;
+        letter-spacing: 0.2px;
+      }
+      #panel p.lead {
+        margin: 0 0 18px;
+        font-size: clamp(13px, 1.1vw, 15px);
+        line-height: 1.45;
+        color: rgba(255, 255, 255, 0.92);
+        font-weight: 600;
+      }
+      #panel label.field-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 9px;
+      }
+
+      .input-row {
+        display: flex;
+        gap: 10px;
+        align-items: stretch;
+        margin-bottom: 14px;
+      }
+      .glass-input {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.45);
+        border-radius: 999px;
+        padding: 0 15px;
+        background: rgba(255, 255, 255, 0.06);
+        height: 46px;
+      }
+      .glass-input svg {
+        flex: 0 0 auto;
+        opacity: 0.95;
+      }
+      .glass-input input {
+        flex: 1;
+        min-width: 0;
+        background: transparent;
+        border: 0;
+        outline: none;
+        color: #fff;
+        font-size: 15px;
+        font-family: inherit;
+        font-weight: 600;
+      }
+      .glass-input input::placeholder {
+        color: rgba(255, 255, 255, 0.75);
+      }
+      .pill-white {
+        border: 0;
+        border-radius: 999px;
+        background: #fff;
+        color: #0f1a2a;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 800;
+        padding: 0 22px;
+        cursor: pointer;
+        height: 46px;
+        transition:
+          transform 0.12s ease,
+          box-shadow 0.12s ease;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+      }
+      .pill-white:hover {
+        transform: translateY(-1px);
+      }
+      .pill-white:active {
+        transform: translateY(1px);
+      }
+
+      .glass-btn {
+        width: 100%;
+        height: 48px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.45);
+        background: rgba(255, 255, 255, 0.07);
+        color: #fff;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        cursor: pointer;
+        margin-bottom: 18px;
+        transition: background 0.15s ease;
+      }
+      .glass-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+      .glass-btn:hover {
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      .slider-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 7px;
+      }
+      .slider-head .t {
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .slider-head .v {
+        font-size: 13px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.95);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 20px;
+        background: transparent;
+        cursor: pointer;
+        margin: 0 0 18px;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.45);
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #fff;
+        margin-top: -7px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        border: 0;
+      }
+      input[type="range"]::-moz-range-track {
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.45);
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #fff;
+        border: 0;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .download-btn {
+        width: 100%;
+        height: 50px;
+        border-radius: 16px;
+        border: 0;
+        background: #fff;
+        color: #12233b;
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: 800;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+        transition: transform 0.12s ease;
+        margin-bottom: 0;
+      }
+      .download-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+      .download-btn:hover {
+        transform: translateY(-1px);
+      }
+      #status {
+        font-size: 12px;
+        min-height: 16px;
+        margin: 8px 0 0;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 600;
+      }
+
+      /* ---------- github glass card ---------- */
+      #card {
+        position: absolute;
+        width: clamp(300px, 29vw, 375px);
+        padding: 26px 24px 22px;
+        z-index: 6;
+        border-radius: 34px;
+        color: var(--ink, #fff);
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      #card.dragging {
+        cursor: grabbing;
+      }
+      #card .avatar-wrap {
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        margin: 0 auto 12px;
+        background: #f1f5f9;
+        border: 3px solid rgba(255, 255, 255, 0.85);
+        overflow: hidden;
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
+      }
+      #card .avatar-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      #card h2 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 800;
+        text-align: center;
+      }
+      #card .login {
+        margin: 3px 0 10px;
+        font-size: 15px;
+        font-weight: 700;
+        text-align: center;
+        opacity: 0.95;
+      }
+      #card .desc {
+        margin: 0 auto 16px;
+        font-size: 14px;
+        line-height: 1.4;
+        text-align: center;
+        max-width: 280px;
+        font-weight: 600;
+      }
+
+      .stats {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .stat {
+        flex: 1;
+        border-radius: 15px;
+        padding: 12px 4px 10px;
+        text-align: center;
+        border: 1px solid rgba(var(--ink-rgb, 255, 255, 255), 0.45);
+        background: rgba(var(--ink-rgb, 255, 255, 255), 0.07);
+      }
+      .stat .num {
+        font-size: 21px;
+        font-weight: 800;
+        line-height: 1.1;
+      }
+      .stat .lbl {
+        font-size: 12px;
+        font-weight: 700;
+        opacity: 0.92;
+        margin-top: 2px;
+      }
+
+      .panel-box {
+        border-radius: 15px;
+        padding: 12px 14px;
+        margin-bottom: 14px;
+        border: 1px solid rgba(var(--ink-rgb, 255, 255, 255), 0.45);
+        background: rgba(var(--ink-rgb, 255, 255, 255), 0.07);
+      }
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .panel-head .t {
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .panel-head .y {
+        font-size: 13px;
+        font-weight: 700;
+        opacity: 0.9;
+      }
+      #contribCanvas {
+        width: 100%;
+        height: 56px;
+        display: block;
+      }
+
+      .sig-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2px;
+      }
+      .sig-head .t {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 2px;
+      }
+      .clear-pill {
+        border-radius: 999px;
+        padding: 4px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        border: 1px solid rgba(var(--ink-rgb, 255, 255, 255), 0.5);
+        background: rgba(var(--ink-rgb, 255, 255, 255), 0.07);
+        color: var(--ink, #fff);
+        font-family: inherit;
+        cursor: pointer;
+      }
+      .sig-area {
+        position: relative;
+        height: 72px;
+      }
+      #sigCanvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        cursor: crosshair;
+        touch-action: none;
+      }
+      #sigPlaceholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-style: italic;
+        font-size: 14px;
+        font-weight: 600;
+        opacity: 0.85;
+        pointer-events: none;
+      }
+      .sig-line {
+        height: 0;
+        border-bottom: 1.5px solid rgba(var(--ink-rgb, 255, 255, 255), 0.6);
+        margin: 0 4px;
+      }
+
+      .card-meta {
+        display: flex;
+        gap: 10px;
+        margin-top: 14px;
+        margin-bottom: 2px;
+      }
+      .meta-tile {
+        flex: 1;
+        min-width: 0;
+        height: 46px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: var(--ink, #fff);
+        font-size: 14px;
+        font-weight: 700;
+        padding: 0 12px;
+        border: 1px solid rgba(var(--ink-rgb, 255, 255, 255), 0.45);
+        background: rgba(var(--ink-rgb, 255, 255, 255), 0.07);
+      }
+      .meta-tile svg {
+        flex: 0 0 auto;
+        width: 16px;
+        height: 16px;
+      }
+      .meta-tile span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .built-credit {
+        position: fixed;
+        bottom: 16px;
+        left: 16px;
+        margin: 0;
+        padding: 8px 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.7);
+        z-index: 10;
+      }
+      .built-credit a {
+        color: rgba(255, 255, 255, 0.92);
+        text-decoration: none;
+      }
+      .built-credit a:hover {
+        text-decoration: underline;
+      }
+
+      /* ---------- responsive ---------- */
+      @media (max-width: 1000px) {
+        #panel {
+          left: 4vw;
+          width: clamp(280px, 42vw, 380px);
+        }
+        #card {
+          width: clamp(280px, 38vw, 340px);
+        }
+      }
+      @media (max-width: 720px) {
+        html,
+        body {
+          overflow-y: auto;
+        }
+        body {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          min-height: 100vh;
+        }
+        #glcanvas {
+          position: fixed;
+        }
+        /* GitHub card first, in normal flow (overrides JS inline left/top) */
+        #card {
+          order: 1;
+          position: relative !important;
+          left: auto !important;
+          top: auto !important;
+          width: min(88vw, 340px);
+          margin: 24px auto 0;
+          cursor: default;
+        }
+        /* input panel below */
+        #panel {
+          order: 2;
+          position: relative;
+          left: auto;
+          top: auto;
+          transform: none;
+          width: min(92vw, 420px);
+          margin: 20px auto 90px;
+          max-height: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <img id="srcImage" class="hidden-src" crossorigin="anonymous" alt="" />
+    <canvas id="glcanvas"></canvas>
+
+    <!-- ============ LEFT CONTROL PANEL ============ -->
+    <div id="panel">
+      <h1>GitHub Glass Card</h1>
+      <p class="lead">
+        Turn your GitHub profile into a liquid&#8209;glass card you can sign and
+        download.
+      </p>
+
+      <label class="field-label">Enter your GitHub username</label>
+      <div class="input-row">
+        <div class="glass-input">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="#fff">
+            <path
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"
+            />
+          </svg>
+          <input
+            id="usernameInput"
+            type="text"
+            placeholder="github username"
+            spellcheck="false"
+            autocomplete="off"
+          />
+        </div>
+        <button id="buildBtn" class="pill-white">Build</button>
+      </div>
+
+      <button id="bgBtn" class="glass-btn">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#fff"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="3" y="3" width="18" height="18" rx="3" />
+          <circle cx="8.5" cy="8.5" r="1.6" />
+          <path d="M21 15l-5-5L5 21" />
+        </svg>
+        Add background
+      </button>
+      <input id="bgFile" type="file" accept="image/*" style="display: none" />
+
+      <div class="slider-head">
+        <span class="t">Card liquidness</span>
+      </div>
+      <input id="whiteSlider" type="range" min="0" max="100" value="0" />
+
+      <button id="downloadBtn" class="download-btn">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#12233b"
+          stroke-width="2.4"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 3v12" />
+          <path d="M6 11l6 6 6-6" />
+          <path d="M4 21h16" />
+        </svg>
+        Download card
+      </button>
+      <p id="status"></p>
+    </div>
+
+    <!-- ============ GITHUB GLASS CARD ============ -->
+    <div id="card">
+      <div class="avatar-wrap" data-dl="avatar">
+        <img
+          id="avatarImg"
+          crossorigin="anonymous"
+          src="https://avatars.githubusercontent.com/u/583231?v=4"
+          alt="avatar"
+          draggable="false"
+        />
+      </div>
+      <h2 id="nameText" data-dl="text">Octocat</h2>
+      <div class="login" id="loginText" data-dl="text">@octocat</div>
+      <p class="desc" id="descText" data-dl="text">
+        Type a GitHub username to build your liquid&#8209;glass profile card.
+      </p>
+
+      <div class="stats">
+        <div class="stat" data-dl="panel">
+          <div class="num" id="repoNum" data-dl="text">8</div>
+          <div class="lbl" data-dl="text">Repos</div>
+        </div>
+        <div class="stat" data-dl="panel">
+          <div class="num" id="followerNum" data-dl="text">9.0k</div>
+          <div class="lbl" data-dl="text">Followers</div>
+        </div>
+        <div class="stat" data-dl="panel">
+          <div class="num" id="followingNum" data-dl="text">9</div>
+          <div class="lbl" data-dl="text">Following</div>
+        </div>
+      </div>
+
+      <div class="panel-box" data-dl="panel">
+        <div class="panel-head">
+          <span class="t" data-dl="text">Contributions</span>
+          <span class="y" id="contribYearText" data-dl="text"></span>
+        </div>
+        <canvas id="contribCanvas" data-dl="canvas"></canvas>
+      </div>
+
+      <div class="panel-box" data-dl="panel" style="margin-bottom: 0">
+        <div class="sig-head">
+          <span class="t" data-dl="text">SIGNATURE</span>
+          <button class="clear-pill" id="sigClear" data-dl="panel">
+            <span data-dl="text">Clear</span>
+          </button>
+        </div>
+        <div class="sig-area">
+          <canvas id="sigCanvas" data-dl="canvas"></canvas>
+          <div id="sigPlaceholder">sign here &#9998;</div>
+        </div>
+        <div class="sig-line" data-dl="hr"></div>
+      </div>
+
+      <div class="card-meta">
+        <div class="meta-tile" data-dl="panel">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 21s-7-5.6-7-11a7 7 0 1 1 14 0c0 5.4-7 11-7 11z" />
+            <circle cx="12" cy="10" r="2.6" />
+          </svg>
+          <span id="locationText" data-dl="text">San Francisco</span>
+        </div>
+        <div class="meta-tile" data-dl="panel">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="4" width="18" height="18" rx="3" />
+            <path d="M16 2v4M8 2v4M3 10h18" />
+          </svg>
+          <span id="joinedText" data-dl="text">Joined 2011</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="built-credit">
+      Built by Claude Fable 5 on
+      <a
+        href="https://typingmind.com?utm_source=github-glass-badge"
+        target="_blank"
+        rel="noopener noreferrer"
+        >TypingMind</a
+      >
+      (<a
+        href="https://typingmind.com?utm_source=github-glass-badge"
+        target="_blank"
+        rel="noopener noreferrer"
+        >TypingMind.com</a
+      >)
+    </p>
+
+    <!-- ============ LIQUID GLASS SHADER ============ -->
+    <script id="fragShader" type="x-shader/x-fragment">
+      precision mediump float;
+
+      uniform vec3 iResolution;
+      uniform vec2 uImgRes;
+      uniform vec2 uCardPos;   // card centre in gl pixels (y up)
+      uniform vec2 uCardHalf;  // half width / half height in pixels
+      uniform float uWhite;    // 0..1 whiteness
+      uniform sampler2D iChannel0;
+
+      vec2 coverUv(vec2 uv) {
+        float ca = iResolution.x / iResolution.y;
+        float ia = uImgRes.x / uImgRes.y;
+        vec2 s = ca > ia ? vec2(1.0, ia / ca) : vec2(ca / ia, 1.0);
+        return (uv - 0.5) * s + 0.5;
+      }
+
+      void main() {
+        const float POWER_EXPONENT = 6.0;
+        vec2 fragCoord = gl_FragCoord.xy;
+        vec2 uv = fragCoord / iResolution.xy;
+
+        vec2 d = (fragCoord - uCardPos) / uCardHalf;
+        float roundedBox = pow(abs(d.x), POWER_EXPONENT) + pow(abs(d.y), POWER_EXPONENT);
+
+        float rb1 = clamp((1.0 - roundedBox) * 8.0, 0.0, 1.0);
+        float rb2 = clamp((0.955 - roundedBox * 0.95) * 16.0, 0.0, 1.0) -
+                    clamp((0.91  - roundedBox * 0.95) * 16.0, 0.0, 1.0);
+        float rb3 = clamp((1.5 - roundedBox * 1.1) * 2.0, 0.0, 1.0) -
+                    clamp((1.0 - roundedBox * 1.1) * 2.0, 0.0, 1.0);
+
+        vec4 bg = texture2D(iChannel0, coverUv(uv));
+        float transition = smoothstep(0.0, 1.0, rb1 + rb2);
+        vec4 color = bg;
+
+        if (transition > 0.0) {
+          vec2 cuv = uCardPos / iResolution.xy;
+          vec2 lens = cuv + (uv - cuv) * (1.0 - roundedBox * 0.22);
+
+          vec4 acc = vec4(0.0);
+          float total = 0.0;
+          for (float x = -4.0; x <= 4.0; x++) {
+            for (float y = -4.0; y <= 4.0; y++) {
+              vec2 off = vec2(x, y) * 1.2 / iResolution.xy;
+              acc += texture2D(iChannel0, coverUv(lens + off));
+              total += 1.0;
+            }
+          }
+          acc /= total;
+
+          float dy = uv.y - cuv.y;
+          float gradient = clamp((clamp(dy, 0.0, 0.2) + 0.1) / 2.0, 0.0, 1.0) +
+                           clamp((clamp(-dy, -1000.0, 0.2) * rb3 + 0.1) / 2.0, 0.0, 1.0);
+          vec4 lighting = clamp(acc + vec4(rb1) * gradient + vec4(rb2) * 0.3, 0.0, 1.0);
+
+          lighting = mix(lighting, vec4(1.0), uWhite * 0.97);
+          color = mix(bg, lighting, transition);
+        }
+        gl_FragColor = vec4(color.rgb, 1.0);
+      }
+    </script>
+
+    <script>
+      /* =================== WebGL setup =================== */
+      const canvas = document.getElementById("glcanvas");
+      const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
+      const img = document.getElementById("srcImage");
+      const card = document.getElementById("card");
+
+      function setCanvasSize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      setCanvasSize();
+
+      const vsSource = `attribute vec2 position; void main(){ gl_Position = vec4(position, 0.0, 1.0); }`;
+      const fsSource = document.getElementById("fragShader").textContent;
+
+      function createShader(type, source) {
+        const sh = gl.createShader(type);
+        gl.shaderSource(sh, source);
+        gl.compileShader(sh);
+        if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+          console.error("Shader error:", gl.getShaderInfoLog(sh));
+          gl.deleteShader(sh);
+          return null;
+        }
+        return sh;
+      }
+      const program = gl.createProgram();
+      gl.attachShader(program, createShader(gl.VERTEX_SHADER, vsSource));
+      gl.attachShader(program, createShader(gl.FRAGMENT_SHADER, fsSource));
+      gl.linkProgram(program);
+      gl.useProgram(program);
+
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+        gl.STATIC_DRAW,
+      );
+      const positionLoc = gl.getAttribLocation(program, "position");
+      gl.enableVertexAttribArray(positionLoc);
+      gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+      const U = {
+        resolution: gl.getUniformLocation(program, "iResolution"),
+        imgRes: gl.getUniformLocation(program, "uImgRes"),
+        cardPos: gl.getUniformLocation(program, "uCardPos"),
+        cardHalf: gl.getUniformLocation(program, "uCardHalf"),
+        white: gl.getUniformLocation(program, "uWhite"),
+        texture: gl.getUniformLocation(program, "iChannel0"),
+      };
+
+      const texture = gl.createTexture();
+      let imgW = 1600,
+        imgH = 1000;
+
+      function uploadTexture(source, w, h) {
+        imgW = w;
+        imgH = h;
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          0,
+          gl.RGBA,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          source,
+        );
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      }
+
+      /* Procedural fallback background (painted spring flowers on blue sky) */
+      function proceduralBackground() {
+        const c = document.createElement("canvas");
+        c.width = 1600;
+        c.height = 1000;
+        const x = c.getContext("2d");
+        const g = x.createLinearGradient(0, 0, 0, 1000);
+        g.addColorStop(0, "#5aa7e8");
+        g.addColorStop(1, "#8cc7f5");
+        x.fillStyle = g;
+        x.fillRect(0, 0, 1600, 1000);
+        const petals = [
+          "#ffffff",
+          "#ff5a3c",
+          "#ff8b4a",
+          "#ffb14d",
+          "#ff7d9d",
+          "#ffe26b",
+        ];
+        function flower(cx, cy, r, col) {
+          for (let i = 0; i < 8; i++) {
+            const a = (i / 8) * Math.PI * 2;
+            x.save();
+            x.translate(cx + Math.cos(a) * r * 0.8, cy + Math.sin(a) * r * 0.8);
+            x.rotate(a);
+            x.fillStyle = col;
+            x.beginPath();
+            x.ellipse(0, 0, r * 0.75, r * 0.4, 0, 0, Math.PI * 2);
+            x.fill();
+            x.restore();
+          }
+          x.fillStyle = "#f5c542";
+          x.beginPath();
+          x.arc(cx, cy, r * 0.35, 0, Math.PI * 2);
+          x.fill();
+        }
+        x.strokeStyle = "#3f7d3a";
+        x.lineWidth = 10;
+        for (let i = 0; i < 26; i++) {
+          const sx = Math.random() * 1600,
+            sy = Math.random() * 1000;
+          x.beginPath();
+          x.moveTo(sx, sy + 220);
+          x.quadraticCurveTo(sx + 60, sy + 110, sx, sy);
+          x.stroke();
+        }
+        for (let i = 0; i < 34; i++) {
+          flower(
+            Math.random() * 1600,
+            Math.random() * 1000,
+            36 + Math.random() * 60,
+            petals[(Math.random() * petals.length) | 0],
+          );
+        }
+        uploadTexture(c, 1600, 1000);
+      }
+      proceduralBackground();
+
+      function loadBackground(urls, i = 0) {
+        if (i >= urls.length) return;
+        img.onload = () => {
+          try {
+            uploadTexture(img, img.naturalWidth, img.naturalHeight);
+          } catch (e) {
+            proceduralBackground();
+          }
+        };
+        img.onerror = () => loadBackground(urls, i + 1);
+        img.src = urls[i];
+      }
+      loadBackground(["https://www.bubbbly.com/assets/02386bb9-ef66-4f7b-a67.webp"]);
+
+      /* =================== Whiteness / ink colour =================== */
+      const MAX_WHITE = 0.16; // slider at 100% = 16% whiteness
+      let whiteness = 0;
+      let inkRGB = [255, 255, 255];
+
+      function applyWhiteness(sliderFrac) {
+        whiteness = sliderFrac * MAX_WHITE;
+        card.style.setProperty("--ink", `rgb(${inkRGB.join(",")})`);
+        card.style.setProperty("--ink-rgb", inkRGB.join(","));
+        drawContrib();
+        redrawSignature();
+      }
+      document
+        .getElementById("whiteSlider")
+        .addEventListener("input", (e) => applyWhiteness(e.target.value / 100));
+
+      /* =================== Contribution graph =================== */
+      const contribCanvas = document.getElementById("contribCanvas");
+      const contribYearText = document.getElementById("contribYearText");
+      const ROWS = 7;
+      const greenShades = ["#9be9a8", "#40c463", "#30a14e", "#216e39"];
+      let contribCells = [];
+      let contribYear = new Date().getFullYear();
+      let totalContrib = 0;
+
+      function buildDummyContributions() {
+        const year = new Date().getFullYear();
+        const days = [];
+        const start = new Date(year, 0, 1);
+        const end = new Date(year, 11, 31);
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          const r = Math.random();
+          let level = 0;
+          if (r > 0.7) level = 1;
+          if (r > 0.82) level = 2;
+          if (r > 0.91) level = 3;
+          if (r > 0.96) level = 4;
+          days.push({
+            date: d.toISOString().split("T")[0],
+            count: level,
+            level,
+          });
+        }
+        return days;
+      }
+
+      function toCells(days) {
+        if (!days || days.length === 0) return [];
+        const sorted = [...days].sort(
+          (a, b) => new Date(a.date) - new Date(b.date),
+        );
+        const firstDow = new Date(sorted[0].date).getDay();
+        const cells = [];
+        for (let i = 0; i < firstDow; i++) cells.push(null);
+        sorted.forEach((d) => cells.push(d));
+        return cells;
+      }
+
+      function updateContribLabel() {
+        contribYearText.textContent =
+          totalContrib > 0
+            ? fmt(totalContrib) + " this year"
+            : String(contribYear);
+      }
+
+      function setContributions(days, year) {
+        contribCells = toCells(days);
+        contribYear = year;
+        totalContrib = days.reduce((s, d) => s + (d.count || 0), 0);
+        updateContribLabel();
+        drawContrib();
+      }
+
+      function drawContrib() {
+        const w = contribCanvas.clientWidth,
+          h = contribCanvas.clientHeight;
+        if (!w) return;
+        contribCanvas.width = w * 2;
+        contribCanvas.height = h * 2;
+        const x = contribCanvas.getContext("2d");
+        x.setTransform(2, 0, 0, 2, 0, 0);
+        x.clearRect(0, 0, w, h);
+        if (!contribCells.length) return;
+
+        const cols = Math.ceil(contribCells.length / ROWS);
+        const cellW = w / cols;
+        const rowGap = h / ROWS;
+        const radius = Math.min(cellW, rowGap) * 0.28;
+
+        for (let i = 0; i < contribCells.length; i++) {
+          const cell = contribCells[i];
+          if (!cell) continue;
+          const col = Math.floor(i / ROWS);
+          const row = i % ROWS;
+          const lv = cell.level || 0;
+          x.fillStyle =
+            lv === 0
+              ? `rgba(${inkRGB.join(",")},0.25)`
+              : greenShades[lv - 1] || greenShades[0];
+          x.beginPath();
+          x.arc(
+            col * cellW + cellW / 2,
+            row * rowGap + rowGap / 2,
+            radius,
+            0,
+            Math.PI * 2,
+          );
+          x.fill();
+        }
+      }
+
+      /* =================== Signature pad =================== */
+      const sigCanvas = document.getElementById("sigCanvas");
+      const sigPlaceholder = document.getElementById("sigPlaceholder");
+      let strokes = [],
+        curStroke = null;
+
+      function sizeSig() {
+        const w = sigCanvas.clientWidth,
+          h = sigCanvas.clientHeight;
+        sigCanvas.width = w * 2;
+        sigCanvas.height = h * 2;
+        redrawSignature();
+      }
+      function redrawSignature() {
+        const x = sigCanvas.getContext("2d");
+        x.setTransform(2, 0, 0, 2, 0, 0);
+        x.clearRect(0, 0, sigCanvas.clientWidth, sigCanvas.clientHeight);
+        x.strokeStyle = `rgba(${inkRGB.join(",")},0.95)`;
+        x.lineWidth = 2.4;
+        x.lineCap = "round";
+        x.lineJoin = "round";
+        for (const s of strokes) {
+          if (s.length < 2) continue;
+          x.beginPath();
+          x.moveTo(s[0][0], s[0][1]);
+          for (let i = 1; i < s.length; i++) x.lineTo(s[i][0], s[i][1]);
+          x.stroke();
+        }
+      }
+      sigCanvas.addEventListener("pointerdown", (e) => {
+        e.stopPropagation();
+        sigCanvas.setPointerCapture(e.pointerId);
+        const r = sigCanvas.getBoundingClientRect();
+        curStroke = [[e.clientX - r.left, e.clientY - r.top]];
+        strokes.push(curStroke);
+        sigPlaceholder.style.display = "none";
+      });
+      sigCanvas.addEventListener("pointermove", (e) => {
+        if (!curStroke) return;
+        const r = sigCanvas.getBoundingClientRect();
+        curStroke.push([e.clientX - r.left, e.clientY - r.top]);
+        redrawSignature();
+      });
+      sigCanvas.addEventListener("pointerup", () => {
+        curStroke = null;
+      });
+      document
+        .getElementById("sigClear")
+        .addEventListener("pointerdown", (e) => e.stopPropagation());
+      document.getElementById("sigClear").addEventListener("click", () => {
+        strokes = [];
+        redrawSignature();
+        sigPlaceholder.style.display = "flex";
+      });
+
+      /* =================== Draggable card =================== */
+      function placeCardInitial() {
+        if (window.innerWidth <= 720) return; // CSS flow handles mobile layout
+        const w = card.offsetWidth,
+          h = card.offsetHeight;
+        card.style.left =
+          Math.max(
+            20,
+            window.innerWidth - w - Math.max(40, window.innerWidth * 0.06),
+          ) + "px";
+        card.style.top = Math.max(16, (window.innerHeight - h) / 2) + "px";
+      }
+      let drag = null;
+      const isMobile = () => window.innerWidth <= 720;
+      card.addEventListener("pointerdown", (e) => {
+        if (isMobile()) return; // card is in normal flow on mobile
+        const t = e.target;
+        if (t.closest("a, button, canvas, input")) return;
+        drag = {
+          dx: e.clientX - card.offsetLeft,
+          dy: e.clientY - card.offsetTop,
+        };
+        card.setPointerCapture(e.pointerId);
+        card.classList.add("dragging");
+      });
+      card.addEventListener("pointermove", (e) => {
+        if (!drag) return;
+        const w = card.offsetWidth,
+          h = card.offsetHeight;
+        let nx = e.clientX - drag.dx,
+          ny = e.clientY - drag.dy;
+        nx = Math.min(Math.max(nx, 8), window.innerWidth - w - 8);
+        ny = Math.min(Math.max(ny, 8), window.innerHeight - h - 8);
+        card.style.left = nx + "px";
+        card.style.top = ny + "px";
+      });
+      card.addEventListener("pointerup", () => {
+        drag = null;
+        card.classList.remove("dragging");
+      });
+
+      /* =================== GitHub build =================== */
+      const statusEl = document.getElementById("status");
+      function fmt(n) {
+        return n >= 1000
+          ? (n / 1000).toFixed(1).replace(/\.0k$/, "k") + "k"
+          : String(n);
+      }
+
+      async function build() {
+        const u = document.getElementById("usernameInput").value.trim();
+        if (!u) {
+          statusEl.textContent = "Please enter a username first.";
+          return;
+        }
+        const btn = document.getElementById("buildBtn");
+        btn.textContent = "...";
+        statusEl.textContent = "";
+        try {
+          const res = await fetch(
+            "https://api.github.com/users/" + encodeURIComponent(u),
+          );
+          if (!res.ok)
+            throw new Error(
+              res.status === 404
+                ? "User not found."
+                : "GitHub API error (" + res.status + ").",
+            );
+          const d = await res.json();
+          document.getElementById("avatarImg").src = d.avatar_url;
+          document.getElementById("nameText").textContent = d.name || d.login;
+          document.getElementById("loginText").textContent = "@" + d.login;
+          document.getElementById("descText").textContent = d.bio
+            ? d.bio
+            : "Liquid-glass profile card for " + (d.name || d.login) + ".";
+          document.getElementById("repoNum").textContent = fmt(d.public_repos);
+          document.getElementById("followerNum").textContent = fmt(d.followers);
+          document.getElementById("followingNum").textContent = fmt(
+            d.following,
+          );
+          document.getElementById("locationText").textContent =
+            d.location || d.company || "Planet Earth";
+          document.getElementById("joinedText").textContent =
+            "Joined " + new Date(d.created_at).getFullYear();
+
+          const year = new Date().getFullYear();
+          const contribRes = await fetch(
+            "https://github-contributions-api.jogruber.de/v4/" +
+              encodeURIComponent(d.login) +
+              "?y=" +
+              year,
+          );
+          if (contribRes.ok) {
+            const c = await contribRes.json();
+            setContributions(c.contributions || [], year);
+          } else {
+            setContributions([], year);
+          }
+
+          statusEl.textContent = "Card built for @" + d.login + " ✓";
+        } catch (err) {
+          statusEl.textContent = err.message || "Failed to load profile.";
+        }
+        btn.textContent = "Build";
+      }
+      document.getElementById("buildBtn").addEventListener("click", build);
+      document
+        .getElementById("usernameInput")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter") build();
+        });
+
+      /* =================== Add background =================== */
+      document
+        .getElementById("bgBtn")
+        .addEventListener("click", () =>
+          document.getElementById("bgFile").click(),
+        );
+      document.getElementById("bgFile").addEventListener("change", (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const url = URL.createObjectURL(f);
+        const im = new Image();
+        im.onload = () => {
+          uploadTexture(im, im.naturalWidth, im.naturalHeight);
+          URL.revokeObjectURL(url);
+        };
+        im.src = url;
+      });
+
+      /* =================== Download card =================== */
+      function roundRectPath(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      function downloadCard() {
+        const rect = card.getBoundingClientRect();
+        const S = 2;
+        const WANT_PAD = Math.round(rect.width * 0.16); // ideal breathing room (CSS px)
+        // clamp each side to what's actually available on screen so the capture
+        // never falls outside the canvas (no dark/broken border)
+        const padL = Math.min(WANT_PAD, Math.max(0, Math.floor(rect.left)));
+        const padR = Math.min(
+          WANT_PAD,
+          Math.max(0, Math.floor(canvas.width - rect.right)),
+        );
+        const padT = Math.min(WANT_PAD, Math.max(0, Math.floor(rect.top)));
+        const padB = Math.min(
+          WANT_PAD,
+          Math.max(0, Math.floor(canvas.height - rect.bottom)),
+        );
+
+        const out = document.createElement("canvas");
+        out.width = (rect.width + padL + padR) * S;
+        out.height = (rect.height + padT + padB) * S;
+        const ctx = out.getContext("2d");
+        const ox = padL * S,
+          oy = padT * S; // card origin inside the padded output
+
+        // background + glass straight from the WebGL canvas
+        ctx.drawImage(
+          canvas,
+          rect.left - padL,
+          rect.top - padT,
+          rect.width + padL + padR,
+          rect.height + padT + padB,
+          0,
+          0,
+          out.width,
+          out.height,
+        );
+
+        const ink = inkRGB.join(",");
+
+        function drawTextEl(el) {
+          const cs = getComputedStyle(el);
+          if (cs.display === "none") return;
+          const r = el.getBoundingClientRect();
+          const x = (r.left - rect.left) * S + ox,
+            y = (r.top - rect.top) * S + oy;
+          const fs = parseFloat(cs.fontSize);
+          ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${fs * S}px ${cs.fontFamily}`;
+          ctx.fillStyle = `rgb(${ink})`;
+          const words = el.textContent.trim().replace(/\s+/g, " ").split(" ");
+          const maxW = r.width * S;
+          let lines = [],
+            line = "";
+          for (const wd of words) {
+            const t = line ? line + " " + wd : wd;
+            if (ctx.measureText(t).width > maxW && line) {
+              lines.push(line);
+              line = wd;
+            } else line = t;
+          }
+          lines.push(line);
+          let lh = parseFloat(cs.lineHeight);
+          if (isNaN(lh)) lh = fs * 1.35;
+          if (lines.length === 1) lh = r.height;
+          ctx.textBaseline = "middle";
+          const center = cs.textAlign === "center";
+          lines.forEach((ln, i) => {
+            const ly = y + (i + 0.5) * lh * S;
+            if (center) {
+              ctx.textAlign = "center";
+              ctx.fillText(ln, x + maxW / 2, ly);
+            } else {
+              ctx.textAlign = "left";
+              ctx.fillText(ln, x, ly);
+            }
+          });
+        }
+
+        card.querySelectorAll("[data-dl]").forEach((el) => {
+          const kind = el.dataset.dl;
+          const r = el.getBoundingClientRect();
+          const x = (r.left - rect.left) * S + ox,
+            y = (r.top - rect.top) * S + oy;
+          const w = r.width * S,
+            h = r.height * S;
+          if (kind === "panel") {
+            const br =
+              parseFloat(getComputedStyle(el).borderTopLeftRadius) || 18;
+            roundRectPath(ctx, x, y, w, h, br * S);
+            ctx.fillStyle = `rgba(${ink},0.08)`;
+            ctx.fill();
+            ctx.strokeStyle = `rgba(${ink},0.45)`;
+            ctx.lineWidth = 1.5 * S;
+            ctx.stroke();
+          } else if (kind === "text") {
+            drawTextEl(el);
+          } else if (kind === "canvas") {
+            ctx.drawImage(el, x, y, w, h);
+          } else if (kind === "hr") {
+            ctx.strokeStyle = `rgba(${ink},0.6)`;
+            ctx.lineWidth = 1.5 * S;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + w, y);
+            ctx.stroke();
+          } else if (kind === "avatar") {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x + w / 2, y + h / 2, w / 2, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.fillStyle = "#f1f5f9";
+            ctx.fillRect(x, y, w, h);
+            try {
+              ctx.drawImage(document.getElementById("avatarImg"), x, y, w, h);
+            } catch (e) {}
+            ctx.restore();
+            ctx.beginPath();
+            ctx.arc(x + w / 2, y + h / 2, w / 2 - 2, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(255,255,255,0.9)";
+            ctx.lineWidth = 4 * S;
+            ctx.stroke();
+          }
+        });
+
+        try {
+          const a = document.createElement("a");
+          a.download =
+            document.getElementById("loginText").textContent.replace("@", "") +
+            "-glass-card.png";
+          a.href = out.toDataURL("image/png");
+          a.click();
+          statusEl.textContent = "Card downloaded ✓";
+        } catch (e) {
+          statusEl.textContent =
+            "Download blocked: background image is not CORS-readable. Try uploading your own background.";
+        }
+      }
+      document
+        .getElementById("downloadBtn")
+        .addEventListener("click", downloadCard);
+
+      /* =================== Render loop =================== */
+      function render() {
+        const rect = card.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = canvas.height - (rect.top + rect.height / 2);
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.uniform3f(U.resolution, canvas.width, canvas.height, 1.0);
+        gl.uniform2f(U.imgRes, imgW, imgH);
+        gl.uniform2f(U.cardPos, cx, cy);
+        gl.uniform2f(U.cardHalf, rect.width / 2 + 4, rect.height / 2 + 4);
+        gl.uniform1f(U.white, whiteness);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.uniform1i(U.texture, 0);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        requestAnimationFrame(render);
+      }
+
+      let lastW = window.innerWidth;
+      window.addEventListener("resize", () => {
+        setCanvasSize();
+        if (window.innerWidth > 720) {
+          // keep card inside window on desktop
+          const w = card.offsetWidth,
+            h = card.offsetHeight;
+          card.style.left =
+            Math.min(
+              Math.max(card.offsetLeft, 8),
+              Math.max(8, window.innerWidth - w - 8),
+            ) + "px";
+          card.style.top =
+            Math.min(
+              Math.max(card.offsetTop, 8),
+              Math.max(8, window.innerHeight - h - 8),
+            ) + "px";
+          // re-place when coming back from mobile layout
+          if (lastW <= 720) placeCardInitial();
+        }
+        lastW = window.innerWidth;
+        drawContrib();
+        sizeSig();
+      });
+
+      /* init */
+      applyWhiteness(0);
+      placeCardInitial();
+      setContributions(buildDummyContributions(), new Date().getFullYear());
+      sizeSig();
+      render();
+    </script>
+  </body>
+</html>

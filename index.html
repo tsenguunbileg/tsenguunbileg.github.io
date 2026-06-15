@@ -1,75 +1,107 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="mn">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pokémon Search App</title>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Татвар төлөгчийн мэдээлэл</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./script.js" defer></script>
   </head>
-  <body class="bg-gradient-to-b from-sky-500 min-h-screen flex items-center justify-center">
-    <main class="container max-w-md bg-white shadow-lg rounded-lg p-8 font-mono text-base transition-all ease-in-out delay-150">
-      <h1 class="text-2xl font-bold text-center">Татвар төлөгчийн мэдээлэл татах програм</h1> 
-      <p id="author" class="my-2 text-center">Програм зохиогч: Цэнгүүнбилэг</p>
-      <div class="w-full">
-        <form role="search" id="search-form" class="my-4">
-          <label for="search-input">Регистрийн дугаар: оруулна уу</label>
-          <input 
-            type="text" 
-            name="pokemon" 
-            id="search-input" 
-            required
-            placeholder="Регистрийн дугаар" 
-            class="w-3/4 border rounded p-2 focus:outline-none focus:ring-2 focus:ring-sky-500" 
-          />
-          <button 
-            id="search-button" 
-            class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600"
-          >
-            Хайх
-          </button>
+  <body data-theme="glass">
+    <button
+      id="theme-toggle"
+      class="theme-toggle"
+      type="button"
+      aria-pressed="true"
+      aria-label="Загвар солих"
+    >
+      Classic
+    </button>
+
+    <main class="app-shell">
+      <section class="lookup-card" aria-labelledby="app-title">
+        <header class="card-header">
+          <span class="eyebrow">eBarimt / eTax</span>
+          <h1 id="app-title">Татвар төлөгчийн мэдээлэл татах програм</h1>
+          <p id="author" class="lead">Програм зохиогч: Цэнгүүнбилэг</p>
+        </header>
+
+        <form id="taxpayer-lookup-form" class="lookup-form" role="search">
+          <label class="field-label" for="taxpayer-input">
+            Регистрийн дугаараа оруулна уу
+          </label>
+          <div class="input-row">
+            <div class="glass-input">
+              <svg
+                aria-hidden="true"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <path
+                  d="M10.8 18.6a7.8 7.8 0 1 1 0-15.6 7.8 7.8 0 0 1 0 15.6Z"
+                  stroke="currentColor"
+                  stroke-width="2"
+                />
+                <path
+                  d="m16.6 16.6 4.4 4.4"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <input
+                id="taxpayer-input"
+                name="registrationNumber"
+                type="text"
+                required
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="Регистрийн дугаар"
+              />
+            </div>
+            <button id="lookup-button" class="pill-white" type="submit">
+              Хайх
+            </button>
+          </div>
         </form>
-        <div class="output">
-          <div class="top-container" id="top-container">
-            <div class="name-and-id">
-              <span id="pokemon-name"></span>
-              <span id="pokemon-id"></span>
+
+        <p id="lookup-status" class="status-message" role="status" aria-live="polite"></p>
+
+        <section class="result-panel" aria-label="Татвар төлөгчийн үр дүн">
+          <div class="identity-row">
+            <div class="identity-copy">
+              <span class="result-kicker">Олдсон мэдээлэл</span>
+              <h2 id="taxpayer-name">Регистрийн дугаар оруулна уу</h2>
+              <p id="taxpayer-tin">ТИН дугаар энд харагдана</p>
             </div>
-            <div class="size">
-              <span id="weight"></span>
-              <span id="height"></span>
+            <span id="found-badge" class="result-badge neutral">Хүлээгдэж байна</span>
+          </div>
+
+          <div class="stats-grid">
+            <article class="stat">
+              <div id="vat-payer" class="num">-</div>
+              <div class="lbl">НӨАТ төлөгч</div>
+            </article>
+            <article class="stat">
+              <div id="city-tax-payer" class="num">-</div>
+              <div class="lbl">НХАТ төлөгч</div>
+            </article>
+            <article class="stat">
+              <div id="taxpayer-found" class="num">-</div>
+              <div class="lbl">Олдсон эсэх</div>
+            </article>
+          </div>
+
+          <div class="details-list">
+            <div class="detail-row">
+              <span>НӨАТ төлөгч болсон огноо</span>
+              <strong id="vat-registered-date">-</strong>
             </div>
-            <div id="sprite-container" class="sprite-container flex justify-center"></div>
-            <div id="types"></div>
           </div>
-          <div class="bottom-container mt-4">
-            <table class="w-full border-2 border-separate border-sky-300 border-spacing-2">
-              <tr>
-                <th class="border border-slate-300 bg-sky-300">Мэдээ</th>
-                <th class="border border-slate-300 p-1 bg-sky-300">Хариу</th>
-              </tr>
-              <tr>
-                <td class="border border-slate-300 p-1 bg-sky-200/70">НӨАТ төлөгч эсэх</td>
-                <td id="hp" class="border border-slate-300 p-1 bg-sky-200/70"></td>
-              </tr>
-              <tr>
-                <td class="border border-slate-300 p-1 bg-sky-100">НХАТ төлөгч эсэх</td>
-                <td id="attack" class="border border-slate-300 p-1 bg-sky-100"></td>
-              </tr>
-              <tr>
-                <td class="border border-slate-300 p-1 bg-sky-100">Олдсон эсэх</td>
-                <td id="defense" class="border border-slate-300 p-1 bg-sky-100"></td>
-              </tr>
-              <tr>
-                <td class="border border-slate-300 p-1 bg-sky-100">НӨАТ төлөгч болсон огноо</td>
-                <td id="special-attack" class="border border-slate-300 p-1 bg-sky-100"></td>
-              </tr>
-            </table>
-          </div>
-        </div>
-      </div>
-      <script src="./script.js"></script>
+        </section>
+      </section>
     </main>
   </body>
 </html>
