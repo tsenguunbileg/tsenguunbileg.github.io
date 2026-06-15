@@ -70,6 +70,20 @@ svg {
   flex: 0 0 auto;
 }
 
+img.hidden-src {
+  display: none;
+}
+
+.glass-refraction-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: none;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
 .corner-controls {
   position: fixed;
   top: 18px;
@@ -429,18 +443,25 @@ body[data-theme="classic"] .status-message[data-type="error"] {
   overflow-wrap: anywhere;
 }
 
-body[data-theme="glass"] {
+body[data-theme="glass"],
+body[data-theme="semi"] {
   --ink: #fff;
   --ink-rgb: 255, 255, 255;
   background: #121826;
 }
 
-body[data-theme="glass"] .app-shell {
+body[data-theme="glass"] .app-shell,
+body[data-theme="semi"] .app-shell {
   width: fit-content;
   max-width: 100%;
 }
 
 body[data-theme="glass"]::before {
+  background: transparent;
+}
+
+body[data-theme="semi"]::before,
+body[data-theme="glass"].no-glass-renderer::before {
   background:
     linear-gradient(135deg, rgba(17, 24, 39, 0.22), rgba(17, 24, 39, 0.52)),
     var(--page-bg-image);
@@ -449,28 +470,30 @@ body[data-theme="glass"]::before {
   filter: saturate(1.08);
 }
 
-body[data-theme="glass"]::after {
+body[data-theme="glass"] .glass-refraction-canvas {
+  display: block;
+}
+
+body[data-theme="glass"]::after,
+body[data-theme="semi"]::after {
   opacity: 0.22;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.34'/%3E%3C/svg%3E");
   mix-blend-mode: overlay;
 }
 
 body[data-theme="glass"] .lookup-card {
-  width: clamp(320px, 32vw, 440px);
+  width: clamp(300px, 29vw, 375px);
   padding: 26px 24px 22px;
   border-radius: 34px;
   color: var(--ink, #fff);
   cursor: grab;
   touch-action: none;
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.42);
-  box-shadow:
-    0 24px 72px rgba(0, 0, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.42),
-    inset 0 -20px 60px rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(4px) saturate(1.2);
-  -webkit-backdrop-filter: blur(4px) saturate(1.2);
-  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  overflow: visible;
 }
 
 body[data-theme="glass"] .lookup-card::before,
@@ -484,32 +507,88 @@ body[data-theme="glass"] .lookup-card::after {
 
 body[data-theme="glass"] .lookup-card::before {
   background:
+    radial-gradient(circle at 22% 0%, rgba(255, 255, 255, 0.48), transparent 24%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.25), transparent 30%),
+    linear-gradient(315deg, rgba(255, 255, 255, 0.1), transparent 38%);
+  opacity: 0.5;
+  mix-blend-mode: screen;
+}
+
+body[data-theme="glass"] .lookup-card::after {
+  inset: 0;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 14px 34px rgba(255, 255, 255, 0.06);
+}
+
+body[data-theme="semi"] .lookup-card,
+body[data-theme="glass"].no-glass-renderer .lookup-card {
+  width: clamp(320px, 32vw, 440px);
+  padding: 26px 24px 22px;
+  border-radius: 34px;
+  color: var(--ink, #fff);
+  cursor: grab;
+  touch-action: none;
+  user-select: auto;
+  -webkit-user-select: auto;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  box-shadow:
+    0 24px 72px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -20px 60px rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(4px) saturate(1.2);
+  -webkit-backdrop-filter: blur(4px) saturate(1.2);
+  overflow: hidden;
+}
+
+body[data-theme="semi"] .lookup-card::before,
+body[data-theme="semi"] .lookup-card::after,
+body[data-theme="glass"].no-glass-renderer .lookup-card::before,
+body[data-theme="glass"].no-glass-renderer .lookup-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+body[data-theme="semi"] .lookup-card::before,
+body[data-theme="glass"].no-glass-renderer .lookup-card::before {
+  background:
     radial-gradient(circle at 24% 0%, rgba(255, 255, 255, 0.45), transparent 26%),
     linear-gradient(145deg, rgba(255, 255, 255, 0.26), transparent 34%),
     linear-gradient(315deg, rgba(255, 255, 255, 0.12), transparent 38%);
   opacity: 0.72;
 }
 
-body[data-theme="glass"] .lookup-card::after {
+body[data-theme="semi"] .lookup-card::after,
+body[data-theme="glass"].no-glass-renderer .lookup-card::after {
   inset: 1px;
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.14),
     inset 0 18px 40px rgba(255, 255, 255, 0.08);
 }
 
-body[data-theme="glass"] .lookup-card > * {
+body[data-theme="glass"] .lookup-card > *,
+body[data-theme="semi"] .lookup-card > * {
   position: relative;
   z-index: 1;
 }
 
-body[data-theme="glass"] .lookup-card.is-dragging {
+body[data-theme="glass"] .lookup-card.is-dragging,
+body[data-theme="semi"] .lookup-card.is-dragging {
   cursor: grabbing;
 }
 
 body[data-theme="glass"] .eyebrow,
 body[data-theme="glass"] .theme-toggle,
 body[data-theme="glass"] .api-mode-toggle,
-body[data-theme="glass"] .background-button {
+body[data-theme="glass"] .background-button,
+body[data-theme="semi"] .eyebrow,
+body[data-theme="semi"] .theme-toggle,
+body[data-theme="semi"] .api-mode-toggle,
+body[data-theme="semi"] .background-button {
   color: #fff;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.28);
@@ -518,19 +597,24 @@ body[data-theme="glass"] .background-button {
 }
 
 body[data-theme="glass"] .lead,
-body[data-theme="glass"] .status-message {
+body[data-theme="glass"] .status-message,
+body[data-theme="semi"] .lead,
+body[data-theme="semi"] .status-message {
   color: rgba(255, 255, 255, 0.9);
 }
 
-body[data-theme="glass"] .status-message[data-type="success"] {
+body[data-theme="glass"] .status-message[data-type="success"],
+body[data-theme="semi"] .status-message[data-type="success"] {
   color: #bbf7d0;
 }
 
-body[data-theme="glass"] .status-message[data-type="error"] {
+body[data-theme="glass"] .status-message[data-type="error"],
+body[data-theme="semi"] .status-message[data-type="error"] {
   color: #fecaca;
 }
 
-body[data-theme="glass"] .api-mode-toggle.is-active {
+body[data-theme="glass"] .api-mode-toggle.is-active,
+body[data-theme="semi"] .api-mode-toggle.is-active {
   color: #12233b;
   background: #fff;
   border-color: rgba(255, 255, 255, 0.92);
@@ -638,6 +722,7 @@ body[data-theme="classic"] .result-badge.copyable {
   }
 
   body[data-theme="glass"] .lookup-card,
+  body[data-theme="semi"] .lookup-card,
   body[data-theme="classic"] .lookup-card {
     padding: 22px;
     width: 100%;

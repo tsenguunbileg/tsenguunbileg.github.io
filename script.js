@@ -8,6 +8,8 @@ const backgroundButton = document.getElementById("background-button");
 const backgroundInput = document.getElementById("background-input");
 const appShell = document.querySelector(".app-shell");
 const lookupCard = document.querySelector(".lookup-card");
+const glassCanvas = document.getElementById("glass-canvas");
+const glassSourceImage = document.getElementById("glass-source-image");
 
 const taxpayerName = document.getElementById("taxpayer-name");
 const taxpayerTin = document.getElementById("taxpayer-tin");
@@ -22,6 +24,13 @@ const DIRECT_TAXPAYER_INFO_URL = "https://api.ebarimt.mn/api/info/check/getInfo"
 const TIN_INFO_URL = "/api/ebarimt/getTinInfo";
 const TAXPAYER_INFO_URL = "/api/ebarimt/getInfo";
 const TAXPAYER_PROXY_URL = "/api/taxpayer";
+const GLASS_BACKGROUND_URL = "https://www.bubbbly.com/assets/02386bb9-ef66-4f7b-a67.webp";
+const THEME_ORDER = ["glass", "classic", "semi"];
+const THEME_LABELS = {
+  glass: "Glass",
+  classic: "Classic",
+  semi: "Semi",
+};
 
 const YES = "Тийм";
 const NO = "Үгүй";
@@ -46,13 +55,24 @@ const initialResult = {
 let currentTin = "";
 let currentBackgroundUrl = "";
 let hasDraggedCard = false;
+let glassRenderer = null;
 
 function setTheme(theme) {
-  const nextTheme = theme === "classic" ? "classic" : "glass";
+  const nextTheme = THEME_ORDER.includes(theme) ? theme : "glass";
   document.body.dataset.theme = nextTheme;
-  themeToggle.textContent = nextTheme === "glass" ? "Classic" : "Glass";
-  themeToggle.setAttribute("aria-pressed", String(nextTheme === "glass"));
+  themeToggle.textContent = THEME_LABELS[nextTheme];
+  themeToggle.dataset.theme = nextTheme;
+  themeToggle.setAttribute("aria-pressed", String(nextTheme !== "classic"));
+  themeToggle.setAttribute(
+    "aria-label",
+    `Одоогийн загвар: ${THEME_LABELS[nextTheme]}. Солих`,
+  );
   localStorage.setItem("taxLookupTheme", nextTheme);
+}
+
+function getNextTheme(theme) {
+  const currentIndex = THEME_ORDER.indexOf(theme);
+  return THEME_ORDER[(currentIndex + 1) % THEME_ORDER.length] || "glass";
 }
 
 function setApiMode(mode, options = {}) {
@@ -263,7 +283,296 @@ function setCustomBackground(file) {
     "--page-bg-image",
     `url("${currentBackgroundUrl}")`,
   );
+  glassRenderer?.loadBackgroundUrl(currentBackgroundUrl);
   setLookupStatus("Дэвсгэр зураг шинэчлэгдлээ.", "success");
+}
+
+function createGlassRenderer() {
+  if (!glassCanvas || !lookupCard) {
+    document.body.classList.add("no-glass-renderer");
+    return null;
+  }
+
+  const gl = glassCanvas.getContext("webgl", {
+    alpha: false,
+    preserveDrawingBuffer: true,
+  });
+
+  if (!gl) {
+    document.body.classList.add("no-glass-renderer");
+    return null;
+  }
+
+  document.body.classList.remove("no-glass-renderer");
+
+  const vertexSource = `
+    attribute vec2 position;
+    void main() {
+      gl_Position = vec4(position, 0.0, 1.0);
+    }
+  `;
+
+  const fragmentSource = `
+    precision mediump float;
+
+    uniform vec3 iResolution;
+    uniform vec2 uImgRes;
+    uniform vec2 uCardPos;
+    uniform vec2 uCardHalf;
+    uniform float uWhite;
+    uniform sampler2D iChannel0;
+
+    vec2 coverUv(vec2 uv) {
+      float ca = iResolution.x / iResolution.y;
+      float ia = uImgRes.x / uImgRes.y;
+      vec2 s = ca > ia ? vec2(1.0, ia / ca) : vec2(ca / ia, 1.0);
+      return (uv - 0.5) * s + 0.5;
+    }
+
+    void main() {
+      const float POWER_EXPONENT = 6.0;
+      vec2 fragCoord = gl_FragCoord.xy;
+      vec2 uv = fragCoord / iResolution.xy;
+
+      vec2 d = (fragCoord - uCardPos) / uCardHalf;
+      float roundedBox = pow(abs(d.x), POWER_EXPONENT) + pow(abs(d.y), POWER_EXPONENT);
+
+      float rb1 = clamp((1.0 - roundedBox) * 8.0, 0.0, 1.0);
+      float rb2 = clamp((0.955 - roundedBox * 0.95) * 16.0, 0.0, 1.0) -
+                  clamp((0.91 - roundedBox * 0.95) * 16.0, 0.0, 1.0);
+      float rb3 = clamp((1.5 - roundedBox * 1.1) * 2.0, 0.0, 1.0) -
+                  clamp((1.0 - roundedBox * 1.1) * 2.0, 0.0, 1.0);
+
+      vec4 bg = texture2D(iChannel0, coverUv(uv));
+      float transition = smoothstep(0.0, 1.0, rb1 + rb2);
+      vec4 color = bg;
+
+      if (transition > 0.0) {
+        vec2 cuv = uCardPos / iResolution.xy;
+        vec2 lens = cuv + (uv - cuv) * (1.0 - roundedBox * 0.22);
+
+        vec4 acc = vec4(0.0);
+        float total = 0.0;
+        for (float x = -4.0; x <= 4.0; x++) {
+          for (float y = -4.0; y <= 4.0; y++) {
+            vec2 off = vec2(x, y) * 1.2 / iResolution.xy;
+            acc += texture2D(iChannel0, coverUv(lens + off));
+            total += 1.0;
+          }
+        }
+        acc /= total;
+
+        float dy = uv.y - cuv.y;
+        float gradient = clamp((clamp(dy, 0.0, 0.2) + 0.1) / 2.0, 0.0, 1.0) +
+                         clamp((clamp(-dy, -1000.0, 0.2) * rb3 + 0.1) / 2.0, 0.0, 1.0);
+        vec4 lighting = clamp(acc + vec4(rb1) * gradient + vec4(rb2) * 0.3, 0.0, 1.0);
+
+        lighting = mix(lighting, vec4(1.0), uWhite * 0.97);
+        color = mix(bg, lighting, transition);
+      }
+
+      gl_FragColor = vec4(color.rgb, 1.0);
+    }
+  `;
+
+  function createShader(type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      const message = gl.getShaderInfoLog(shader);
+      gl.deleteShader(shader);
+      throw new Error(message || "Shader compile failed");
+    }
+
+    return shader;
+  }
+
+  let program;
+  try {
+    program = gl.createProgram();
+    gl.attachShader(program, createShader(gl.VERTEX_SHADER, vertexSource));
+    gl.attachShader(program, createShader(gl.FRAGMENT_SHADER, fragmentSource));
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      throw new Error(gl.getProgramInfoLog(program) || "Shader link failed");
+    }
+  } catch (error) {
+    document.body.classList.add("no-glass-renderer");
+    return null;
+  }
+
+  gl.useProgram(program);
+
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+    gl.STATIC_DRAW,
+  );
+
+  const position = gl.getAttribLocation(program, "position");
+  gl.enableVertexAttribArray(position);
+  gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+
+  const uniforms = {
+    resolution: gl.getUniformLocation(program, "iResolution"),
+    imageResolution: gl.getUniformLocation(program, "uImgRes"),
+    cardPosition: gl.getUniformLocation(program, "uCardPos"),
+    cardHalf: gl.getUniformLocation(program, "uCardHalf"),
+    white: gl.getUniformLocation(program, "uWhite"),
+    texture: gl.getUniformLocation(program, "iChannel0"),
+  };
+
+  const texture = gl.createTexture();
+  let imageWidth = 1600;
+  let imageHeight = 1000;
+  let isRunning = false;
+
+  function setCanvasSize() {
+    glassCanvas.width = window.innerWidth;
+    glassCanvas.height = window.innerHeight;
+  }
+
+  function uploadTexture(source, width, height) {
+    imageWidth = width;
+    imageHeight = height;
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      source,
+    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+
+  function useProceduralBackground() {
+    const fallbackCanvas = document.createElement("canvas");
+    fallbackCanvas.width = 1600;
+    fallbackCanvas.height = 1000;
+    const context = fallbackCanvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
+    const sky = context.createLinearGradient(0, 0, 0, 1000);
+    sky.addColorStop(0, "#5aa7e8");
+    sky.addColorStop(1, "#8cc7f5");
+    context.fillStyle = sky;
+    context.fillRect(0, 0, 1600, 1000);
+
+    const petals = ["#ffffff", "#ff5a3c", "#ff8b4a", "#ffb14d", "#ff7d9d", "#ffe26b"];
+
+    function flower(centerX, centerY, radius, color) {
+      for (let index = 0; index < 8; index += 1) {
+        const angle = (index / 8) * Math.PI * 2;
+        context.save();
+        context.translate(
+          centerX + Math.cos(angle) * radius * 0.8,
+          centerY + Math.sin(angle) * radius * 0.8,
+        );
+        context.rotate(angle);
+        context.fillStyle = color;
+        context.beginPath();
+        context.ellipse(0, 0, radius * 0.75, radius * 0.4, 0, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+      }
+
+      context.fillStyle = "#f5c542";
+      context.beginPath();
+      context.arc(centerX, centerY, radius * 0.35, 0, Math.PI * 2);
+      context.fill();
+    }
+
+    context.strokeStyle = "#3f7d3a";
+    context.lineWidth = 10;
+
+    for (let index = 0; index < 26; index += 1) {
+      const startX = Math.random() * 1600;
+      const startY = Math.random() * 1000;
+      context.beginPath();
+      context.moveTo(startX, startY + 220);
+      context.quadraticCurveTo(startX + 60, startY + 110, startX, startY);
+      context.stroke();
+    }
+
+    for (let index = 0; index < 34; index += 1) {
+      flower(
+        Math.random() * 1600,
+        Math.random() * 1000,
+        36 + Math.random() * 60,
+        petals[Math.floor(Math.random() * petals.length)],
+      );
+    }
+
+    uploadTexture(fallbackCanvas, 1600, 1000);
+  }
+
+  function loadBackgroundUrl(url) {
+    const image = glassSourceImage || new Image();
+    image.onload = () => {
+      try {
+        uploadTexture(image, image.naturalWidth, image.naturalHeight);
+      } catch (error) {
+        useProceduralBackground();
+      }
+    };
+    image.onerror = useProceduralBackground;
+    image.crossOrigin = url.startsWith("http") ? "anonymous" : "";
+    image.src = url;
+  }
+
+  function render() {
+    if (document.body.dataset.theme === "glass") {
+      const rect = lookupCard.getBoundingClientRect();
+
+      if (rect.width && rect.height) {
+        const centerX = rect.left + rect.width / 2;
+        const centerY = glassCanvas.height - (rect.top + rect.height / 2);
+
+        gl.viewport(0, 0, glassCanvas.width, glassCanvas.height);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.uniform3f(uniforms.resolution, glassCanvas.width, glassCanvas.height, 1);
+        gl.uniform2f(uniforms.imageResolution, imageWidth, imageHeight);
+        gl.uniform2f(uniforms.cardPosition, centerX, centerY);
+        gl.uniform2f(uniforms.cardHalf, rect.width / 2 + 4, rect.height / 2 + 4);
+        gl.uniform1f(uniforms.white, 0);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.uniform1i(uniforms.texture, 0);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      }
+    }
+
+    window.requestAnimationFrame(render);
+  }
+
+  window.addEventListener("resize", setCanvasSize);
+  setCanvasSize();
+  useProceduralBackground();
+
+  return {
+    loadBackgroundUrl,
+    start() {
+      if (isRunning) {
+        return;
+      }
+
+      isRunning = true;
+      window.requestAnimationFrame(render);
+    },
+  };
 }
 
 function clampCardPosition(left, top) {
@@ -487,7 +796,7 @@ async function lookupTaxpayer() {
 }
 
 themeToggle.addEventListener("click", () => {
-  setTheme(document.body.dataset.theme === "glass" ? "classic" : "glass");
+  setTheme(getNextTheme(document.body.dataset.theme));
 });
 
 apiModeToggle.addEventListener("click", () => {
@@ -509,6 +818,10 @@ lookupForm.addEventListener("submit", (event) => {
   event.preventDefault();
   lookupTaxpayer();
 });
+
+glassRenderer = createGlassRenderer();
+glassRenderer?.loadBackgroundUrl(GLASS_BACKGROUND_URL);
+glassRenderer?.start();
 
 setTheme(localStorage.getItem("taxLookupTheme") || "glass");
 setApiMode(isDirectApiMode() ? "direct" : "proxy");

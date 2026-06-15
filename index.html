@@ -8,6 +8,9 @@
     <script src="./script.js" defer></script>
   </head>
   <body data-theme="glass">
+    <img id="glass-source-image" class="hidden-src" crossorigin="anonymous" alt="" />
+    <canvas id="glass-canvas" class="glass-refraction-canvas"></canvas>
+
     <div class="corner-controls" aria-label="Тохиргоо">
       <button
         id="theme-toggle"
@@ -16,7 +19,7 @@
         aria-pressed="true"
         aria-label="Загвар солих"
       >
-        Classic
+        Glass
       </button>
       <button
         id="api-mode-toggle"
