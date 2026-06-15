@@ -8,22 +8,44 @@
     <script src="./script.js" defer></script>
   </head>
   <body data-theme="glass">
-    <button
-      id="theme-toggle"
-      class="theme-toggle"
-      type="button"
-      aria-pressed="true"
-      aria-label="Загвар солих"
-    >
-      Classic
-    </button>
+    <div class="corner-controls" aria-label="Тохиргоо">
+      <button
+        id="theme-toggle"
+        class="theme-toggle"
+        type="button"
+        aria-pressed="true"
+        aria-label="Загвар солих"
+      >
+        Classic
+      </button>
+      <button
+        id="api-mode-toggle"
+        class="api-mode-toggle"
+        type="button"
+        aria-pressed="false"
+      >
+        API: Proxy
+      </button>
+      <button
+        id="background-button"
+        class="background-button"
+        type="button"
+      >
+        Background
+      </button>
+      <input
+        id="background-input"
+        type="file"
+        accept="image/*"
+        hidden
+      />
+    </div>
 
     <main class="app-shell">
       <section class="lookup-card" aria-labelledby="app-title">
         <header class="card-header">
           <span class="eyebrow">eBarimt / eTax</span>
           <h1 id="app-title">Татвар төлөгчийн мэдээлэл татах програм</h1>
-          <p id="author" class="lead">Програм зохиогч: Цэнгүүнбилэг</p>
         </header>
 
         <form id="taxpayer-lookup-form" class="lookup-form" role="search">
@@ -76,7 +98,14 @@
               <h2 id="taxpayer-name">Регистрийн дугаар оруулна уу</h2>
               <p id="taxpayer-tin">ТИН дугаар энд харагдана</p>
             </div>
-            <span id="found-badge" class="result-badge neutral">Хүлээгдэж байна</span>
+            <button
+              id="found-badge"
+              class="result-badge neutral"
+              type="button"
+              disabled
+            >
+              Хүлээгдэж байна
+            </button>
           </div>
 
           <div class="stats-grid">

@@ -16,6 +16,7 @@
   --classic-muted: #475569;
   --classic-line: #bae6fd;
   --classic-sky: #0ea5e9;
+  --page-bg-image: url("https://www.bubbbly.com/assets/02386bb9-ef66-4f7b-a67.webp");
 }
 
 html {
@@ -69,12 +70,20 @@ svg {
   flex: 0 0 auto;
 }
 
-.theme-toggle {
+.corner-controls {
   position: fixed;
   top: 18px;
   right: 18px;
   z-index: 20;
-  min-width: 98px;
+  display: grid;
+  gap: 8px;
+  width: 128px;
+}
+
+.theme-toggle,
+.api-mode-toggle,
+.background-button {
+  width: 100%;
   height: 42px;
   display: inline-flex;
   align-items: center;
@@ -95,7 +104,15 @@ svg {
   transform: translateY(-1px);
 }
 
+.api-mode-toggle:hover,
+.background-button:hover {
+  transform: translateY(-1px);
+}
+
 .theme-toggle:focus-visible,
+.api-mode-toggle:focus-visible,
+.background-button:focus-visible,
+.result-badge:focus-visible,
 .pill-white:focus-visible,
 .glass-input:focus-within {
   outline: 3px solid rgba(14, 165, 233, 0.35);
@@ -104,10 +121,21 @@ svg {
 
 .app-shell {
   width: min(100%, 560px);
+  position: relative;
+  z-index: 2;
+}
+
+.app-shell.is-dragged {
+  position: fixed;
+  margin: 0;
+  width: auto;
+  z-index: 12;
 }
 
 .lookup-card {
   width: 100%;
+  margin-inline: auto;
+  position: relative;
   transition:
     background 220ms ease,
     border-color 220ms ease,
@@ -301,12 +329,31 @@ body[data-theme="classic"] .status-message[data-type="error"] {
   text-align: center;
   border: 1px solid rgba(var(--ink-rgb), 0.45);
   background: rgba(var(--ink-rgb), 0.07);
+  color: inherit;
 }
 
-.result-badge.success {
-  color: #0f5132;
-  background: rgba(187, 247, 208, 0.92);
-  border-color: rgba(187, 247, 208, 0.96);
+.result-badge.copyable {
+  color: #12233b;
+  background: #fff;
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.result-badge.copyable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+}
+
+.result-badge.copyable:active {
+  transform: translateY(1px);
+}
+
+.result-badge:disabled:not(.copyable) {
+  cursor: default;
 }
 
 .result-badge.error {
@@ -388,22 +435,18 @@ body[data-theme="glass"] {
   background: #121826;
 }
 
+body[data-theme="glass"] .app-shell {
+  width: fit-content;
+  max-width: 100%;
+}
+
 body[data-theme="glass"]::before {
   background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.08) 0 1px,
-      transparent 1px 76px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.07) 0 1px,
-      transparent 1px 76px
-    ),
-    linear-gradient(135deg, rgba(10, 90, 105, 0.94), transparent 42%),
-    linear-gradient(225deg, rgba(178, 82, 72, 0.78), transparent 44%),
-    linear-gradient(330deg, rgba(233, 180, 76, 0.72), transparent 38%),
-    #121826;
+    linear-gradient(135deg, rgba(17, 24, 39, 0.22), rgba(17, 24, 39, 0.52)),
+    var(--page-bg-image);
+  background-position: center;
+  background-size: cover;
+  filter: saturate(1.08);
 }
 
 body[data-theme="glass"]::after {
@@ -413,19 +456,60 @@ body[data-theme="glass"]::after {
 }
 
 body[data-theme="glass"] .lookup-card {
-  padding: 28px 30px 26px;
-  border-radius: 26px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  width: clamp(320px, 32vw, 440px);
+  padding: 26px 24px 22px;
+  border-radius: 34px;
+  color: var(--ink, #fff);
+  cursor: grab;
+  touch-action: none;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.42);
   box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  backdrop-filter: blur(22px) saturate(1.2);
-  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+    0 24px 72px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -20px 60px rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(4px) saturate(1.2);
+  -webkit-backdrop-filter: blur(4px) saturate(1.2);
+  overflow: hidden;
+}
+
+body[data-theme="glass"] .lookup-card::before,
+body[data-theme="glass"] .lookup-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+body[data-theme="glass"] .lookup-card::before {
+  background:
+    radial-gradient(circle at 24% 0%, rgba(255, 255, 255, 0.45), transparent 26%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.26), transparent 34%),
+    linear-gradient(315deg, rgba(255, 255, 255, 0.12), transparent 38%);
+  opacity: 0.72;
+}
+
+body[data-theme="glass"] .lookup-card::after {
+  inset: 1px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    inset 0 18px 40px rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="glass"] .lookup-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+body[data-theme="glass"] .lookup-card.is-dragging {
+  cursor: grabbing;
 }
 
 body[data-theme="glass"] .eyebrow,
-body[data-theme="glass"] .theme-toggle {
+body[data-theme="glass"] .theme-toggle,
+body[data-theme="glass"] .api-mode-toggle,
+body[data-theme="glass"] .background-button {
   color: #fff;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.28);
@@ -446,6 +530,12 @@ body[data-theme="glass"] .status-message[data-type="error"] {
   color: #fecaca;
 }
 
+body[data-theme="glass"] .api-mode-toggle.is-active {
+  color: #12233b;
+  background: #fff;
+  border-color: rgba(255, 255, 255, 0.92);
+}
+
 body[data-theme="classic"] {
   --ink: var(--classic-ink);
   --ink-rgb: 15, 23, 42;
@@ -460,12 +550,30 @@ body[data-theme="classic"] .theme-toggle {
   box-shadow: 0 10px 28px rgba(3, 105, 161, 0.2);
 }
 
+body[data-theme="classic"] .api-mode-toggle,
+body[data-theme="classic"] .background-button {
+  color: #0369a1;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(14, 165, 233, 0.28);
+  box-shadow: 0 10px 28px rgba(3, 105, 161, 0.2);
+}
+
+body[data-theme="classic"] .api-mode-toggle.is-active {
+  color: #fff;
+  background: #0369a1;
+}
+
 body[data-theme="classic"] .lookup-card {
   padding: 32px;
   border-radius: 14px;
   background: #fff;
   border: 1px solid rgba(186, 230, 253, 0.9);
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+  cursor: grab;
+}
+
+body[data-theme="classic"] .lookup-card.is-dragging {
+  cursor: grabbing;
 }
 
 body[data-theme="classic"] .eyebrow {
@@ -505,19 +613,34 @@ body[data-theme="classic"] .result-badge {
   border-color: var(--classic-line);
 }
 
+body[data-theme="classic"] .result-badge.copyable {
+  color: #12233b;
+  background: #fff;
+  border-color: rgba(14, 165, 233, 0.28);
+}
+
 @media (max-width: 640px) {
   body {
     padding: 78px 14px 28px;
   }
 
-  .theme-toggle {
+  .corner-controls {
     top: 14px;
     right: 14px;
+    width: 116px;
+  }
+
+  .app-shell.is-dragged {
+    position: relative;
+    left: auto !important;
+    top: auto !important;
+    width: min(100%, 560px) !important;
   }
 
   body[data-theme="glass"] .lookup-card,
   body[data-theme="classic"] .lookup-card {
     padding: 22px;
+    width: 100%;
   }
 
   h1 {

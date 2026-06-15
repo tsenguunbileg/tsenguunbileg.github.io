@@ -3,6 +3,11 @@ const lookupForm = document.getElementById("taxpayer-lookup-form");
 const lookupButton = document.getElementById("lookup-button");
 const lookupStatus = document.getElementById("lookup-status");
 const themeToggle = document.getElementById("theme-toggle");
+const apiModeToggle = document.getElementById("api-mode-toggle");
+const backgroundButton = document.getElementById("background-button");
+const backgroundInput = document.getElementById("background-input");
+const appShell = document.querySelector(".app-shell");
+const lookupCard = document.querySelector(".lookup-card");
 
 const taxpayerName = document.getElementById("taxpayer-name");
 const taxpayerTin = document.getElementById("taxpayer-tin");
@@ -30,11 +35,17 @@ const initialResult = {
   tin: "ТИН дугаар энд харагдана",
   badge: "Хүлээгдэж байна",
   badgeClass: "neutral",
+  badgeDisabled: true,
+  tinValue: "",
   vat: EMPTY,
   city: EMPTY,
   found: EMPTY,
   date: EMPTY,
 };
+
+let currentTin = "";
+let currentBackgroundUrl = "";
+let hasDraggedCard = false;
 
 function setTheme(theme) {
   const nextTheme = theme === "classic" ? "classic" : "glass";
@@ -42,6 +53,25 @@ function setTheme(theme) {
   themeToggle.textContent = nextTheme === "glass" ? "Classic" : "Glass";
   themeToggle.setAttribute("aria-pressed", String(nextTheme === "glass"));
   localStorage.setItem("taxLookupTheme", nextTheme);
+}
+
+function setApiMode(mode, options = {}) {
+  const nextMode = mode === "direct" ? "direct" : "proxy";
+  localStorage.setItem("taxLookupApiMode", nextMode);
+
+  apiModeToggle.textContent = nextMode === "direct" ? "API: Direct" : "API: Proxy";
+  apiModeToggle.setAttribute("aria-pressed", String(nextMode === "direct"));
+  apiModeToggle.classList.toggle("is-active", nextMode === "direct");
+
+  if (options.updateUrl) {
+    const url = new URL(window.location.href);
+    if (nextMode === "direct") {
+      url.searchParams.set("api", "direct");
+    } else {
+      url.searchParams.delete("api");
+    }
+    window.history.replaceState({}, "", url.toString());
+  }
 }
 
 function normalizeRegistrationNumber(value) {
@@ -99,8 +129,14 @@ function renderResult(result) {
   taxpayerFound.textContent = result.found;
   vatRegisteredDate.textContent = result.date;
 
+  currentTin = result.tinValue || "";
   foundBadge.textContent = result.badge;
   foundBadge.className = `result-badge ${result.badgeClass}`;
+  foundBadge.disabled = result.badgeDisabled ?? !currentTin;
+  foundBadge.setAttribute(
+    "aria-label",
+    currentTin ? `ТИН ${currentTin} дугаар хуулах` : result.badge,
+  );
 }
 
 function clearResult() {
@@ -163,6 +199,150 @@ function getApiMode() {
 
 function isDirectApiMode() {
   return getApiMode() === "direct";
+}
+
+function fallbackCopyText(value) {
+  const copyInput = document.createElement("textarea");
+  copyInput.value = value;
+  copyInput.setAttribute("readonly", "");
+  copyInput.style.position = "fixed";
+  copyInput.style.left = "-9999px";
+  document.body.append(copyInput);
+  copyInput.select();
+
+  try {
+    return document.execCommand("copy");
+  } finally {
+    copyInput.remove();
+  }
+}
+
+async function copyTinToClipboard() {
+  if (!currentTin) {
+    return;
+  }
+
+  const originalText = foundBadge.textContent;
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(currentTin);
+    } else if (!fallbackCopyText(currentTin)) {
+      throw new Error("Clipboard API unavailable");
+    }
+
+    foundBadge.textContent = "Хуулсан";
+    setLookupStatus("ТИН дугаар clipboard-д хууллаа.", "success");
+    window.setTimeout(() => {
+      if (currentTin) {
+        foundBadge.textContent = "ТИН хуулах";
+      }
+    }, 1300);
+  } catch (error) {
+    foundBadge.textContent = originalText;
+    setLookupStatus("Clipboard-д хуулах боломжгүй байна.", "error");
+  }
+}
+
+function setCustomBackground(file) {
+  if (!file) {
+    return;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    setLookupStatus("Зөвхөн зураг файл сонгоно уу.", "error");
+    return;
+  }
+
+  if (currentBackgroundUrl) {
+    URL.revokeObjectURL(currentBackgroundUrl);
+  }
+
+  currentBackgroundUrl = URL.createObjectURL(file);
+  document.documentElement.style.setProperty(
+    "--page-bg-image",
+    `url("${currentBackgroundUrl}")`,
+  );
+  setLookupStatus("Дэвсгэр зураг шинэчлэгдлээ.", "success");
+}
+
+function clampCardPosition(left, top) {
+  const rect = appShell.getBoundingClientRect();
+  const maxLeft = Math.max(8, window.innerWidth - rect.width - 8);
+  const maxTop = Math.max(8, window.innerHeight - rect.height - 8);
+
+  return {
+    left: Math.min(Math.max(left, 8), maxLeft),
+    top: Math.min(Math.max(top, 8), maxTop),
+  };
+}
+
+function makeCardDraggable() {
+  if (!appShell || !lookupCard) {
+    return;
+  }
+
+  let drag = null;
+
+  const endDrag = () => {
+    if (!drag) {
+      return;
+    }
+
+    lookupCard.releasePointerCapture?.(drag.pointerId);
+    lookupCard.classList.remove("is-dragging");
+    drag = null;
+  };
+
+  lookupCard.addEventListener("pointerdown", (event) => {
+    if (window.innerWidth <= 640) {
+      return;
+    }
+
+    if (event.target.closest("a, button, input, label, select, textarea, svg")) {
+      return;
+    }
+
+    const rect = appShell.getBoundingClientRect();
+    const cardWidth = rect.width;
+    appShell.classList.add("is-dragged");
+    appShell.style.width = `${cardWidth}px`;
+    appShell.style.left = `${rect.left}px`;
+    appShell.style.top = `${rect.top}px`;
+
+    drag = {
+      pointerId: event.pointerId,
+      dx: event.clientX - rect.left,
+      dy: event.clientY - rect.top,
+    };
+    hasDraggedCard = true;
+    lookupCard.setPointerCapture(event.pointerId);
+    lookupCard.classList.add("is-dragging");
+  });
+
+  lookupCard.addEventListener("pointermove", (event) => {
+    if (!drag) {
+      return;
+    }
+
+    const next = clampCardPosition(event.clientX - drag.dx, event.clientY - drag.dy);
+    appShell.style.left = `${next.left}px`;
+    appShell.style.top = `${next.top}px`;
+  });
+
+  lookupCard.addEventListener("pointerup", endDrag);
+  lookupCard.addEventListener("pointercancel", endDrag);
+
+  window.addEventListener("resize", () => {
+    if (!hasDraggedCard || window.innerWidth <= 640) {
+      return;
+    }
+
+    const rect = appShell.getBoundingClientRect();
+    const next = clampCardPosition(rect.left, rect.top);
+    appShell.style.left = `${next.left}px`;
+    appShell.style.top = `${next.top}px`;
+  });
 }
 
 function extractTin(payload) {
@@ -285,8 +465,10 @@ async function lookupTaxpayer() {
     renderResult({
       name: info.name || "Нэр бүртгэгдээгүй",
       tin: `ТИН дугаар: ${tin}`,
-      badge: found ? "Олдсон" : "Олдсонгүй",
-      badgeClass: found ? "success" : "error",
+      badge: found ? "ТИН хуулах" : "Олдсонгүй",
+      badgeClass: found ? "copyable" : "error",
+      badgeDisabled: !found,
+      tinValue: found ? tin : "",
       vat: displayBoolean(info.vatPayer),
       city: displayBoolean(info.cityPayer),
       found: displayBoolean(info.found),
@@ -297,6 +479,7 @@ async function lookupTaxpayer() {
     clearResult();
     foundBadge.textContent = "Олдсонгүй";
     foundBadge.className = "result-badge error";
+    foundBadge.disabled = true;
     setLookupStatus(getErrorMessage(error), "error");
   } finally {
     setLoading(false);
@@ -307,10 +490,27 @@ themeToggle.addEventListener("click", () => {
   setTheme(document.body.dataset.theme === "glass" ? "classic" : "glass");
 });
 
+apiModeToggle.addEventListener("click", () => {
+  setApiMode(isDirectApiMode() ? "proxy" : "direct", { updateUrl: true });
+});
+
+backgroundButton.addEventListener("click", () => {
+  backgroundInput.click();
+});
+
+backgroundInput.addEventListener("change", (event) => {
+  setCustomBackground(event.target.files?.[0]);
+  event.target.value = "";
+});
+
+foundBadge.addEventListener("click", copyTinToClipboard);
+
 lookupForm.addEventListener("submit", (event) => {
   event.preventDefault();
   lookupTaxpayer();
 });
 
 setTheme(localStorage.getItem("taxLookupTheme") || "glass");
+setApiMode(isDirectApiMode() ? "direct" : "proxy");
+makeCardDraggable();
 clearResult();
