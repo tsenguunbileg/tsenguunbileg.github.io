@@ -1,4 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["hkg1"]
+  "regions": ["hkg1"],
+  "rewrites": [
+    {
+      "source": "/api/ebarimt/getTinInfo",
+      "destination": "https://api.ebarimt.mn/api/info/check/getTinInfo"
+    },
+    {
+      "source": "/api/ebarimt/getInfo",
+      "destination": "https://api.ebarimt.mn/api/info/check/getInfo"
+    }
+  ]
 }

@@ -12,8 +12,8 @@ const cityTaxPayer = document.getElementById("city-tax-payer");
 const taxpayerFound = document.getElementById("taxpayer-found");
 const vatRegisteredDate = document.getElementById("vat-registered-date");
 
-const TIN_INFO_URL = "https://api.ebarimt.mn/api/info/check/getTinInfo";
-const TAXPAYER_INFO_URL = "https://api.ebarimt.mn/api/info/check/getInfo";
+const TIN_INFO_URL = "/api/ebarimt/getTinInfo";
+const TAXPAYER_INFO_URL = "/api/ebarimt/getInfo";
 const TAXPAYER_PROXY_URL = "/api/taxpayer";
 
 const YES = "Тийм";
@@ -21,6 +21,7 @@ const NO = "Үгүй";
 const EMPTY = "-";
 
 class ProxyUnavailableError extends Error {}
+class ProxyUpstreamError extends Error {}
 
 const initialResult = {
   name: "Регистрийн дугаар оруулна уу",
@@ -122,12 +123,26 @@ async function fetchApiJson(url, options = {}) {
     throw new Error("API-с ирсэн хариуг уншиж чадсангүй.");
   }
 
+  if (response.status >= 500 && payload?.msg?.includes("Upstream network error")) {
+    throw Object.assign(new ProxyUpstreamError(payload.msg), {
+      status: response.status,
+    });
+  }
+
   if (!response.ok) {
     throw new Error(payload?.msg || `API алдаа (${response.status}).`);
   }
 
   if (Number(payload?.status) >= 400) {
-    throw new Error(payload?.msg || "API хүсэлт амжилтгүй боллоо.");
+    const error = new Error(payload?.msg || "API хүсэлт амжилтгүй боллоо.");
+
+    if (response.status >= 500 || payload?.msg?.includes("Upstream network error")) {
+      throw Object.assign(new ProxyUpstreamError(error.message), {
+        status: response.status,
+      });
+    }
+
+    throw error;
   }
 
   return payload;
@@ -207,7 +222,10 @@ async function fetchTaxpayer(registrationNumber) {
     try {
       return await fetchTaxpayerThroughProxy(registrationNumber);
     } catch (error) {
-      if (!(error instanceof ProxyUnavailableError)) {
+      if (
+        !(error instanceof ProxyUnavailableError) &&
+        !(error instanceof ProxyUpstreamError)
+      ) {
         throw error;
       }
     }
