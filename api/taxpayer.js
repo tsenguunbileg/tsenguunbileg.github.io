@@ -1,5 +1,8 @@
+const https = require("node:https");
+
 const TIN_INFO_URL = "https://api.ebarimt.mn/api/info/check/getTinInfo";
 const TAXPAYER_INFO_URL = "https://api.ebarimt.mn/api/info/check/getInfo";
+const REQUEST_TIMEOUT_MS = 8000;
 
 function normalizeRegistrationNumber(value) {
   return String(value || "")
@@ -16,17 +19,77 @@ function buildApiUrl(baseUrl, params) {
   return url.toString();
 }
 
-async function fetchApiJson(url) {
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-    },
-  });
-  const payload = await response.json();
+function requestJson(url) {
+  return new Promise((resolve, reject) => {
+    const requestUrl = new URL(url);
+    const request = https.request(
+      requestUrl,
+      {
+        family: 4,
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "tatvar-vercel-proxy/1.0",
+        },
+        method: "GET",
+        timeout: REQUEST_TIMEOUT_MS,
+      },
+      (upstreamResponse) => {
+        let body = "";
 
-  if (!response.ok || Number(payload?.status) >= 400) {
-    const error = new Error(payload?.msg || "API хүсэлт амжилтгүй боллоо.");
-    error.status = response.ok ? 400 : response.status;
+        upstreamResponse.setEncoding("utf8");
+        upstreamResponse.on("data", (chunk) => {
+          body += chunk;
+        });
+        upstreamResponse.on("end", () => {
+          try {
+            resolve({
+              ok:
+                upstreamResponse.statusCode >= 200 &&
+                upstreamResponse.statusCode < 300,
+              payload: JSON.parse(body),
+              status: upstreamResponse.statusCode,
+            });
+          } catch (error) {
+            error.message = `Invalid JSON from upstream API: ${error.message}`;
+            reject(error);
+          }
+        });
+      },
+    );
+
+    request.on("timeout", () => {
+      request.destroy(
+        Object.assign(new Error("Upstream API request timed out."), {
+          code: "ETIMEDOUT",
+        }),
+      );
+    });
+
+    request.on("error", reject);
+    request.end();
+  });
+}
+
+async function fetchApiJson(url) {
+  let upstream;
+
+  try {
+    upstream = await requestJson(url);
+  } catch (error) {
+    const networkError = new Error(
+      `Upstream network error: ${
+        error.code || error.cause?.code || error.message
+      }`,
+    );
+    networkError.status = 502;
+    throw networkError;
+  }
+
+  const payload = upstream.payload;
+
+  if (!upstream.ok || Number(payload?.status) >= 400) {
+    const error = new Error(payload?.msg || "Upstream API request failed.");
+    error.status = upstream.ok ? 400 : upstream.status;
     throw error;
   }
 
@@ -35,7 +98,7 @@ async function fetchApiJson(url) {
 
 function extractTin(payload) {
   if (payload?.data === null || payload?.data === undefined) {
-    const error = new Error(payload?.msg || "ТИН дугаар олдсонгүй.");
+    const error = new Error(payload?.msg || "TIN was not found.");
     error.status = 404;
     throw error;
   }
@@ -51,7 +114,7 @@ function extractTin(payload) {
     payload.data.value;
 
   if (!tin) {
-    const error = new Error(payload.msg || "ТИН дугаар олдсонгүй.");
+    const error = new Error(payload.msg || "TIN was not found.");
     error.status = 404;
     throw error;
   }
@@ -70,7 +133,11 @@ module.exports = async function taxpayerProxy(request, response) {
   }
 
   if (request.method !== "GET") {
-    response.status(405).json({ status: 405, msg: "GET хүсэлт ашиглана уу." });
+    response.status(405).json({
+      status: 405,
+      msg: "Use a GET request.",
+      data: null,
+    });
     return;
   }
 
@@ -79,7 +146,7 @@ module.exports = async function taxpayerProxy(request, response) {
   if (!registrationNumber) {
     response.status(400).json({
       status: 400,
-      msg: "Регистрийн дугаараа оруулна уу.",
+      msg: "Registration number is required.",
       data: null,
     });
     return;
@@ -96,7 +163,7 @@ module.exports = async function taxpayerProxy(request, response) {
 
     response.status(200).json({
       status: 200,
-      msg: taxpayerPayload.msg || "Амжилттай",
+      msg: taxpayerPayload.msg || "OK",
       data: {
         tin,
         ...taxpayerPayload.data,
@@ -105,7 +172,7 @@ module.exports = async function taxpayerProxy(request, response) {
   } catch (error) {
     response.status(error.status || 500).json({
       status: error.status || 500,
-      msg: error.message || "API хүсэлт амжилтгүй боллоо.",
+      msg: error.message || "Taxpayer lookup failed.",
       data: null,
     });
   }
